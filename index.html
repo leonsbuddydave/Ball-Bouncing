@@ -1,0 +1,151 @@
+<html>
+	<head>
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script type="text/javascript">
+			(function(){
+				window.init = init;
+
+				var canvas;
+				var c;
+
+				var lastTime;
+				var deltaT;
+
+				var theBall;
+
+				var width = 600;
+				var height = 600;
+
+				var floorPos= 50;
+
+				var d = new Date();
+
+				// Define some constants
+				GRAVITY = -9.8;
+	
+				// Energy dissipation constant - negative numbers increase energy on bounce, which
+				// is WEIRD and FUCK YOU
+				EDISS = .75;
+
+
+				$(document).ready(function() {
+					init("gameScreen");
+				});
+
+				function init(gameCanvas)
+				{
+					canvas = $("#" + gameCanvas)[0];
+					c = canvas.getContext('2d');
+					lastTime = d.getTime();
+					theBall = new ball(10, 100, 15);
+					setupInterface(gameCanvas);
+					setInterval(update, 10);
+				}
+
+				function setupInterface(gameCanvas)
+				{
+					$("#" + gameCanvas).mousedown(function(event) {
+						console.log("GO FUCKER");
+						theBall.y_velocity = 0.0;
+						theBall.x = event.clientX;
+						theBall.y = event.clientY;
+					});
+				}
+
+				function ball(x, y, r)
+				{
+					this.x = x;
+					this.y = y;
+					this.r = r;
+					this.y_velocity = 0.0;
+					this.x_velocity = 300.0; // testing
+				}
+					
+				function draw()
+				{
+					// Clear screen
+					c.fillStyle = "#FFFFFF";
+					c.fillRect(0, 0, width, height);
+
+					// Draw floor
+					c.strokeStyle = "#000000";
+					c.beginPath();
+					c.moveTo(0, height - floorPos);
+					c.lineTo(width, height - floorPos);
+					c.closePath();
+					c.stroke();
+
+					// Draw player
+					c.fillStyle = "#FFFFFF";
+					c.strokeStyle = "#000000";
+					c.beginPath();
+					c.arc(theBall.x, theBall.y, theBall.r, 0, Math.PI * 2, true);
+					c.closePath();
+					c.fill();
+					c.stroke();
+
+					hud();
+				}
+
+				function hud()
+				{
+					c.fillStyle = "#000000";
+					c.fillText("Y-Velocity: " + twoDecimals(theBall.y_velocity) + "m/s", 20, 20);
+					c.fillText("FPS: " + Math.round( ( 1000 / (deltaT * 1000) ) ), 20, 30);
+				}
+
+				function physics()
+				{
+					theBall.y_velocity = GRAVITY * deltaT + theBall.y_velocity;
+					theBall.y -= .5 * GRAVITY * Math.pow(deltaT, 2) + theBall.y_velocity;
+
+					theBall.x += theBall.x_velocity * deltaT;
+
+					if (floorCollision())
+					{
+						theBall.y += .5 * GRAVITY * Math.pow(deltaT, 2) + theBall.y_velocity;
+						theBall.y_velocity *= -1 * EDISS;
+					}
+					sideLoopCheck();
+				}
+
+				function sideLoopCheck()
+				{
+					if (theBall.x > width + theBall.r)
+					{
+						theBall.x = -1 * theBall.r;
+					}
+				}
+
+				function update()
+				{
+					d = new Date();
+					time = d.getTime();
+					deltaT = (time - lastTime) / 1000; // get and convert to seconds
+					lastTime = time;
+					//console.log("Delta-T: " + deltaT);
+					physics();
+					draw();
+				}
+
+				function twoDecimals(input)
+				{
+					return Math.round(input * 100) / 100;
+				}
+
+				function floorCollision()
+				{
+					if ( (theBall.y + theBall.r) >= height - 50 )
+						return true;
+					else
+						return false;
+				}
+			 })();
+		</script>
+	</head>
+
+	<body>
+		<canvas id="gameScreen" width="600" height="600">No canvas support.</canvas>
+	</body>
+
+</html>
